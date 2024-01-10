@@ -5,6 +5,7 @@
 module Main (main) where
 
 import           Data.Foldable              (foldl')
+import           Data.Maybe                 (mapMaybe)
 import           Data.Text                  (Text)
 import qualified Data.Text                  as T
 import qualified Data.Text.IO               as T
@@ -71,11 +72,12 @@ chainApply :: [a -> a] -> a -> a
 chainApply = flip $ foldl' (flip ($))
 
 collectApply :: Monoid a => [a -> a] -> a -> a
+collectApply [] a = a
 collectApply fs a = mconcat $ fmap ($ a) fs
 
 output :: Options -> [Tag Text] -> Text
 output (Options { optAttribute, optText, optNoText }) tags = case optAttribute of
-  []    -> T.unlines $ fmap (renderTags . pure) tagsToPrint
+  []    -> showTags optText tagsToPrint
   attrs -> T.unlines $ concatMap (`attribute` tags) attrs
   where
     tagsToPrint :: [Tag Text]
@@ -83,6 +85,10 @@ output (Options { optAttribute, optText, optNoText }) tags = case optAttribute o
       | optText   -> filter isTagText tags
       | optNoText -> filter (not . isTagText) tags
       | otherwise -> tags
+
+showTags :: Bool -> [Tag Text] -> Text
+showTags True = T.concat . mapMaybe maybeTagText
+showTags False = T.unlines . fmap (renderTagsOptions renderOptions{optEscape = id} . pure)
 
 maybeApply :: (a -> b -> b) -> Maybe a -> b -> b
 maybeApply f ma b = maybe b (`f` b) ma
