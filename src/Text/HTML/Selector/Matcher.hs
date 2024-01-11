@@ -6,6 +6,7 @@ module Text.HTML.Selector.Matcher
   , attribute
   , before
   , match
+  , remove
   , select
   , selectOne
   ) where
@@ -35,6 +36,18 @@ before sel = takeWhile (not . match sel)
 
 after :: (StringLike str) => Selector -> [Tag str] -> [Tag str]
 after sel = dropWhile (not . match sel)
+
+remove :: (StringLike str) => Selector -> [Tag str] -> [Tag str]
+remove _ [] = []
+remove sel (t : ts)
+  | match sel t = remove sel $ go t ts
+  | otherwise   = t : remove sel ts
+  where
+    go :: (StringLike str) => Tag str -> [Tag str] -> [Tag str]
+    go curr@(TagOpen name _) (t' : ts')
+      | t' == TagClose name = ts'
+      | otherwise           = go curr ts'
+    go _ _                   = error "cannot match on non-open tag"
 
 match :: (StringLike str) => Selector -> Tag str -> Bool
 match (Selector mTagMatcher attrMatchers) = tagOpen matchTag matchAttrs

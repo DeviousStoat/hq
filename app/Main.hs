@@ -97,9 +97,6 @@ doTake :: Take -> [Tag Text] -> [Tag Text]
 doTake (Take n) tags    = take n tags
 doTake (TakeRev n) tags = drop (length tags - n) tags
 
-remove :: Selector -> [Tag Text] -> [Tag Text]
-remove sel = filter (not . match sel)
-
 parseSelectorWithFail :: Text -> Selector
 parseSelectorWithFail t = case parseSelector t of
   Left err  -> error $ "Invalid selector: " ++ errorBundlePretty err
